@@ -8,7 +8,6 @@ app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# Create uploads folder automatically
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
@@ -45,49 +44,57 @@ def extract_docx(file_path):
 # -------- Resume Analyzer --------
 def analyze_resume(text):
 
+    text = text.lower()
+
     score = 50
     strengths = []
     weaknesses = []
     domains = []
     suggestions = []
 
-    text = text.lower()
-
-    keywords = {
-        "python": "AI / Data Science",
+    # Skill → Domain mapping
+    skills = {
+        "python": "Data Science / AI",
         "machine learning": "Artificial Intelligence",
-        "react": "Frontend Development",
         "html": "Web Development",
         "css": "Web Development",
         "javascript": "Web Development",
+        "react": "Frontend Development",
         "sql": "Database Management",
-        "data analysis": "Data Science"
+        "excel": "Data Analysis"
     }
 
-    # -------- Strength Detection --------
-    for key in keywords:
+    # -------- Detect Strengths --------
+    for skill in skills:
 
-        if key in text:
+        if skill in text:
+
+            strengths.append(
+                f"The resume demonstrates knowledge in {skill}. "
+                f"This indicates the candidate has practical understanding of this technology."
+            )
+
+            domains.append(skills[skill])
 
             score += 5
 
-            strengths.append(
-                f"The resume highlights experience in {key}. "
-                f"This skill is widely used in modern technology roles and shows strong technical capability."
-            )
+    # If no strengths found
+    if not strengths:
 
-            domains.append(keywords[key])
+        strengths.append(
+            "The resume does not clearly highlight technical skills. "
+            "Adding a dedicated skills section would improve the resume."
+        )
 
     # -------- Weakness Detection --------
     if len(text) < 300:
 
         weaknesses.append(
-            "The resume content appears to be short. "
-            "A short resume may not fully represent the candidate’s skills and experience."
+            "The resume content is quite short and may not fully represent the candidate’s abilities."
         )
 
         suggestions.append(
-            "Add more details about projects, technical skills, and internships to strengthen the resume."
+            "Add more detailed descriptions about projects, skills, and achievements."
         )
 
         score -= 10
@@ -95,12 +102,11 @@ def analyze_resume(text):
     if "project" not in text:
 
         weaknesses.append(
-            "No projects are clearly mentioned in the resume. "
-            "Projects are important to demonstrate practical implementation of technical knowledge."
+            "Projects are not clearly mentioned in the resume."
         )
 
         suggestions.append(
-            "Include 2–3 projects explaining the technologies used and the problem solved."
+            "Include at least two projects describing the technologies used and the problem solved."
         )
 
         score -= 10
@@ -108,30 +114,39 @@ def analyze_resume(text):
     if "experience" not in text:
 
         weaknesses.append(
-            "The resume does not mention professional or internship experience. "
-            "Recruiters often prefer candidates with real-world exposure."
+            "Professional or internship experience is not visible in the resume."
         )
 
         suggestions.append(
-            "Add internship experience, freelancing work, or practical training programs."
+            "Adding internship or freelance experience will strengthen the resume."
         )
 
-    if "skills" not in text:
+    if not weaknesses:
 
-        suggestions.append(
-            "Create a separate skills section listing programming languages, tools, and frameworks."
+        weaknesses.append(
+            "The resume structure looks balanced without major weaknesses."
         )
 
-    if "education" not in text:
+    # -------- Domain Suggestion --------
+    if not domains:
+
+        domains.append(
+            "General Software Development"
+        )
+
+    domains = list(set(domains))
+
+    # -------- Improvement Suggestions --------
+    if not suggestions:
 
         suggestions.append(
-            "Add an education section mentioning degree, institution, and academic achievements."
+            "The resume is good but adding certifications, achievements, or internships can further improve it."
         )
 
     if score > 100:
         score = 100
 
-    return score, strengths, weaknesses, list(set(domains)), suggestions
+    return score, strengths, weaknesses, domains, suggestions
 
 
 # -------- Website Route --------
